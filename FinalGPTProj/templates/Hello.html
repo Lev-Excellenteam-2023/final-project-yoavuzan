@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>File Upload</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f1f1f1;
+            margin: 0;
+            padding: 0;
+        }
+
+        .header {
+            background-color: #333;
+            color: #ffffff;
+            padding: 50px;
+            text-align: Left;
+            font-size: 55px;
+            margin-bottom: 40px;
+        }
+
+        .container {
+            display: flex;
+            align-items: Left;
+            justify-content: Left;
+            min-height: 100vh;
+            background-color: #f1f1f1;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 60px;
+            margin-top: 0;
+            margin-bottom: 30px;
+        }
+
+        .file-upload {
+            margin-bottom: 40px;
+        }
+
+        .button {
+            padding: 20px 40px;
+            background-color: #FF8C00;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 30px;
+            transition: background-color 0.3s ease;
+        }
+
+        .button:hover {
+            background-color: #FFA500;
+        }
+
+        .response-message {
+            margin-bottom: 40px;
+            font-size: 30px;
+        }
+
+        .status-section {
+            margin-top: 50px;
+        }
+
+        .status-button {
+            margin-top: 30px;
+        }
+
+        .status-button:hover {
+            background-color: #333;
+        }
+
+        .status-message {
+            margin-top: 30px;
+            font-size: 30px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        ExplaPresentationsGPT
+    </div>
+
+    <div class="container">
+        <div>
+            <h1>Upload </h1>
+            <div class="file-upload">
+                <input type="file" id="fileInput">
+                <button class="button" id="uploadButton">Upload</button>
+            </div>
+            <div class="response-message" id="responseMessage"></div>
+
+            <div class="status-section">
+                <h1>Status </h1>
+                <input type="text" id="fileUid">
+                <button class="button status-button" id="statusButton">Show</button>
+                <div class="status-message" id="statusMessage"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const uploadButton = document.getElementById('uploadButton');
+        const responseMessage = document.getElementById('responseMessage');
+
+        uploadButton.addEventListener('click', () => {
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+
+          axios.post('/upload', formData).then(response => {
+          const uid = response.data['uid'];
+          const message = `Your uid is: ${uid}`;
+          responseMessage.textContent = message;
+          // Handle the response here
+          })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // Handle errors here
+                });
+        });
+
+        const fileUid = document.getElementById('fileUid');
+        const statusButton = document.getElementById('statusButton');
+        const statusMessage = document.getElementById('statusMessage');
+
+        statusButton.addEventListener('click', () => {
+            const uid = fileUid.value;
+        function prettifyJSON(jsonString) {
+          try {
+            const parsedJSON = JSON.parse(jsonString);
+            return JSON.stringify(parsedJSON, null, 2);
+          } catch (error) {
+            console.error('Invalid JSON format:', error);
+            return jsonString;
+          }
+        }
+        axios.get(`/status/${uid}`)
+        .then(response => {
+        const data = response.data;
+        const formattedExplanation = prettifyJSON(data.explanation);
+
+        const formattedData = {
+        ...data,
+        explanation: JSON.parse(formattedExplanation)
+        };
+
+        statusMessage.textContent = JSON.stringify(formattedData, null, 2);
+        // Handle the response here
+  })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // Handle errors here
+                });
+        });
+    </script>
+</body>
+</html>
