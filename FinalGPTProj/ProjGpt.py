@@ -35,11 +35,11 @@ async def complete_chat(presentation_text):
 async def responses_from_server(presentation_path):
 # Extract text from a presentation and complete a chat with GPT-3 for each slide
 # get path to presentation file from command line arguments  and open it
-    prs = Presentation(presentation_path)
+    presentation = Presentation(presentation_path)
     presentation_name = presentation_path.split("/")[-1].split(".")[0]
     tasks = []
 # Create a task for each slide
-    for index, slide in enumerate(prs.slides, start=1):
+    for index, slide in enumerate(presentation.slides, start=1):
         slide_text = extract_text_from_slide(slide)
         if slide_text: # If the slide has text
             task = asyncio.create_task(complete_chat(slide_text)) # Create a task for the slide
