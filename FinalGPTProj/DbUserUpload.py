@@ -1,11 +1,10 @@
-
 # DbUserUpload.py
 
-from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, UniqueConstraint, text
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
-
+from sqlalchemy import create_engine
 
 UPLOADS_FOLDER = "uploads"
 OUTPUTS_FOLDER = "outputs"
@@ -16,15 +15,16 @@ Base = declarative_base()
 class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    email = Column(String(100), nullable=False, unique=True)
+    email = Column(String(100), unique=True, nullable=False)
     uploads = relationship("Upload", back_populates="user", cascade="all, delete-orphan")
 
 class Upload(Base):
     __tablename__ = 'uploads'
+
     id = Column(Integer, primary_key=True, autoincrement=True)
-    uid = Column(String(36), nullable=False, unique=True)
-    filename = Column(String(255), nullable=False)
-    upload_time = Column(DateTime, nullable=False, default=datetime.utcnow)
+    uid = Column(String(300), nullable=False, unique=True)
+    filename = Column(String, nullable=False)
+    upload_time = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
     finish_time = Column(DateTime, nullable=True)
     status = Column(String(20), nullable=False)  # Use String type for compatibility with all databases
 
@@ -69,4 +69,11 @@ class Upload(Base):
         # Implement this method to get error messages for failed uploads
         pass
 
-# ... Other classes, functions, or methods if any
+
+
+# Database configuration
+def create_database_engine():
+    engine = create_engine(f'sqlite:///{DB_FILE}')
+    Base.metadata.create_all(engine)
+    return engine
+    #pull request test

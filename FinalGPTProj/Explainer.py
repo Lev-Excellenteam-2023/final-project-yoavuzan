@@ -3,19 +3,17 @@ import os
 import json
 import glob
 import asyncio
+import uuid
 from sqlalchemy.exc import IntegrityError  # Import the IntegrityError class
 from sqlalchemy.orm import sessionmaker
-from DbUserUpload import Upload, Base, DB_FILE, OUTPUTS_FOLDER, UPLOADS_FOLDER
-from sqlalchemy import create_engine
+from DbUserUpload import Upload, Base, DB_FILE, OUTPUTS_FOLDER, UPLOADS_FOLDER, create_database_engine
 from ProjGpt import responses_from_server
 
 
-def create_database_engine():
-    engine = create_engine(f'sqlite:///{DB_FILE}')
-    Base.metadata.create_all(engine)
-    return engine
+def generate_unique_filename(original_filename):
+    timestamp = str(int(time.time()))
+    return f"{timestamp}_{original_filename}"
 
-import uuid
 
 def upload_file_with_email(client, file_path, email=None):
     while True:
@@ -25,17 +23,26 @@ def upload_file_with_email(client, file_path, email=None):
         else:
             uid = client.upload(file_path, uid=uid)  # Pass the generated UID to the client
 
-        # Check if the generated uid already exists in the database
-        engine = create_engine(f'sqlite:///{DB_FILE}')
+        if uid is None:
+            # Log the error and skip processing this file
+            print(f"An error occurred while uploading '{file_path}'. Skipping processing.")
+            return None
+
+        # Check if the generated uid and filename already exist in the database
+        engine = create_database_engine()
         Session = sessionmaker(bind=engine)
         session = Session()
         existing_upload = session.query(Upload).filter_by(uid=uid).first()
 
         if not existing_upload:
-            break  # The uid is unique, break out of the loop
+            # Check if the filename is unique
+            filename = generate_unique_filename(file_path.split("\\")[-1])
+            existing_filename = session.query(Upload).filter_by(filename=filename).first()
+
+            if not existing_filename:
+                break  # The uid and filename are unique, break out of the loop
 
     return uid
-
 
 def check_status(client, uid):
     status = client.status(uid)
@@ -93,3 +100,4 @@ if __name__ == "__main__":
     print("Main function execution started.")
 
     asyncio.run(main())
+    #for full request
